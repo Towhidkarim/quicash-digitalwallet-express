@@ -19,21 +19,45 @@ export const commitMoneyTransaction = async ({
   user: TRequestUser;
   recipientPhoneNumber: string;
   amount: number;
-  transactionType: 'cashIn' | 'cashOut' | 'sendMoney';
+  transactionType: 'cashIn' | 'cashOut' | 'sendMoney' | 'addMoneyAdmin';
   commission: number;
 }) => {
   const session = await startMongooseSession();
+  let transactionStarted = false;
   try {
     const recipient = await UserModel.findOne(
       { phoneNumber: recipientPhoneNumber },
-      { _id: 1, firstName: 1, lastName: 1, phoneNumber: 1 }
+      {
+        _id: 1,
+        firstName: 1,
+        lastName: 1,
+        phoneNumber: 1,
+        role: 1,
+      }
     );
     const initiator = await UserModel.findById(user._id, {
       _id: 1,
       firstName: 1,
       lastName: 1,
       phoneNumber: 1,
+      role: 1,
     });
+    if (transactionType === 'cashIn' && initiator?.role !== 'agent')
+      throw new ApiError(status.UNAUTHORIZED, 'Only agents can cash in');
+    if (
+      transactionType === 'cashOut' &&
+      initiator?.role !== 'user' &&
+      recipient?.role !== 'agent'
+    )
+      throw new ApiError(
+        status.UNAUTHORIZED,
+        'Recipient must an agent for cash out'
+      );
+    if (transactionType === 'addMoneyAdmin' && initiator?.role !== 'admin')
+      throw new ApiError(
+        status.UNAUTHORIZED,
+        'Only admins can directly add money'
+      );
 
     const initiatorWallet = await WalletModel.findOne({
       walletOwnerId: user._id,
@@ -41,16 +65,27 @@ export const commitMoneyTransaction = async ({
     if (!recipient || !initiator || !initiatorWallet) {
       throw new ApiError(status.NOT_FOUND, 'User not found');
     }
-    if (initiator._id === recipient._id)
+    // console.log(initiator.phoneNumber, recipient.phoneNumber);
+    if (
+      initiator.phoneNumber === recipient.phoneNumber &&
+      transactionType !== 'addMoneyAdmin'
+    )
       throw new ApiError(
         status.BAD_REQUEST,
         'You cannot send money to yourself'
       );
 
-    if (initiatorWallet.balance < amount + amount * commission)
+    if (amount <= 0 && transactionType !== 'addMoneyAdmin')
+      throw new ApiError(status.BAD_REQUEST, 'Amount must be greater than 0');
+
+    if (
+      initiatorWallet.balance < amount + amount * commission &&
+      transactionType !== 'addMoneyAdmin'
+    )
       throw new ApiError(status.BAD_REQUEST, 'Insufficient balance');
 
     session.startTransaction();
+    transactionStarted = true;
 
     const transaction = await TransactionModel.create(
       [
@@ -66,9 +101,17 @@ export const commitMoneyTransaction = async ({
       ],
       { session }
     );
+    let initiatorBalanceUpdate = 0;
+    if (transactionType === 'cashIn')
+      initiatorBalanceUpdate = -amount + amount * commission;
+    else if (transactionType === 'cashOut')
+      initiatorBalanceUpdate = -(amount + amount * commission);
+    else if (transactionType === 'sendMoney')
+      initiatorBalanceUpdate = -(amount + amount * commission);
+
     await WalletModel.updateOne(
       { walletOwnerId: initiator._id },
-      { $inc: { balance: -(amount + amount * commission) } },
+      { $inc: { balance: initiatorBalanceUpdate } },
       { session }
     );
 
@@ -81,24 +124,17 @@ export const commitMoneyTransaction = async ({
     await session.commitTransaction();
     session.endSession();
 
-    //   sendResponse(res, {
-    //     message: 'Money sent successfully',
-    //     statusCode: status.CREATED,
-    //     data: transaction,
-    //   });
     return { success: true, transaction };
   } catch (error) {
-    session.abortTransaction();
+    if (transactionStarted) await session.abortTransaction();
     session.endSession();
+    if (error instanceof ApiError) {
+      throw new ApiError(status.BAD_REQUEST, error.message);
+    }
     throw new ApiError(
       status.INTERNAL_SERVER_ERROR,
-      'An Internal Server Error occurred'
+      'An Internal Server Error occurred:'
     );
-    //   sendResponse(res, {
-    //     message: 'Failed to send money',
-    //     statusCode: status.INTERNAL_SERVER_ERROR,
-    //     data: error,
-    //   });
   }
   return { success: false, transaction: null };
 };

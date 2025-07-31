@@ -106,6 +106,41 @@ const signUp = asyncHandler(
   }
 );
 
+const createSuperUser = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const existingUser = await UserModel.findOne({
+      phoneNumber: env.SU_PHONE_NUMBER,
+    });
+
+    if (existingUser) {
+      return sendResponse(res, {
+        message: 'Super User already exists',
+        statusCode: status.OK,
+        data: null,
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(env.SU_PASSWORD, 10);
+    const newUser = await UserModel.create(
+      {
+        firstName: env.SU_FIRST_NAME,
+        lastName: env.SU_LAST_NAME,
+        email: env.SU_EMAIL,
+        phoneNumber: env.SU_PHONE_NUMBER,
+        role: 'admin',
+        password: hashedPassword,
+      },
+      { runValidators: true }
+    );
+
+    sendResponse(res, {
+      message: 'Super User created successfully',
+      statusCode: status.CREATED,
+      data: newUser,
+    });
+  }
+);
+
 const refresh = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const authToken = getAuthToken(req) || req.cookies.refresh_token;
@@ -134,4 +169,5 @@ export const AuthController = {
   signIn,
   signUp,
   refresh,
+  createSuperUser,
 };
