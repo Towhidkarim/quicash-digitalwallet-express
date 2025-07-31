@@ -62,6 +62,27 @@ export const commitMoneyTransaction = async ({
     const initiatorWallet = await WalletModel.findOne({
       walletOwnerId: user._id,
     });
+    const recipientWallet = await WalletModel.findOne({
+      walletOwnerId: recipient?._id,
+    });
+    if (
+      initiatorWallet?.walletStatus === 'frozen' ||
+      recipientWallet?.walletStatus === 'frozen'
+    ) {
+      throw new ApiError(
+        status.BAD_REQUEST,
+        'The Wallet is frozen, frozen wallets cannot perform transactions'
+      );
+    }
+    if (
+      initiator?.accountStatus === 'inactive' ||
+      recipient?.accountStatus === 'inactive'
+    )
+      throw new ApiError(
+        status.BAD_REQUEST,
+        'Inactive accounts cannot perform transactions'
+      );
+
     if (!recipient || !initiator || !initiatorWallet) {
       throw new ApiError(status.NOT_FOUND, 'User not found');
     }
