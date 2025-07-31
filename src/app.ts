@@ -22,7 +22,7 @@ app.use(async (req, res, next) => {
   await connectDB();
   next();
 });
-app.get('/', (req, res) => res.send('App Served'));
+app.get('/', (req, res) => res.send('App succesfully Served'));
 
 app.use('/api/v1', versionOneRouter);
 
