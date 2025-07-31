@@ -89,6 +89,54 @@ const getAllTransactions = asyncHandler(
   }
 );
 
+const getAgentCommissionsById = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { skip, limit, sortBy, sortOrder } = req.query;
+    const userId = req.params.userId;
+    if (!userId) throw new ApiError(status.BAD_REQUEST, 'User ID is required');
+    const requestUser = validateSchema(requestUserSchema, req.user);
+    if (requestUser.role !== 'agent' && requestUser.role !== 'admin')
+      throw new ApiError(
+        status.UNAUTHORIZED,
+        'You are not authorized to view this information'
+      );
+
+    const user = await UserModel.findById(userId, { role: 1 });
+    if (user?.role !== 'agent')
+      throw new ApiError(status.NOT_FOUND, 'User is not an agent');
+    const transactionInfo = await TransactionModel.find(
+      {
+        $or: [{ initiatorId: userId }, { recipientId: userId }],
+      },
+      { _id: 1, amount: 1, transactionType: 1, createdAt: 1 }
+    )
+      .skip(Number(skip ?? 0))
+      .limit(Number(limit ?? 0))
+      .sort({
+        [sortBy && typeof (sortBy === 'string') ? String(sortBy) : 'createdAt']:
+          sortOrder === 'asc' ? 1 : -1,
+      });
+
+    if (!transactionInfo || transactionInfo.length === 0)
+      throw new ApiError(status.NOT_FOUND, 'No wallets found');
+    const result = transactionInfo.map((transaction) => ({
+      id: transaction._id,
+      amount:
+        transaction.amount *
+        (COMISSIONS[transaction.transactionType as keyof typeof COMISSIONS] ??
+          0),
+      transactionType: transaction.transactionType,
+      createdAt: transaction.createdAt,
+    }));
+
+    sendResponse(res, {
+      message: 'All commission information retrieved successfully',
+      statusCode: status.OK,
+      data: result,
+    });
+  }
+);
+
 const sendMoney = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { recipientPhoneNumber, amount } = req.body;
@@ -229,4 +277,5 @@ export const TransactionController = {
   cashIn,
   cashOut,
   addMoneyAdmin,
+  getAgentCommissionsById,
 };

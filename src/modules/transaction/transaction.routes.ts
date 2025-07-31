@@ -11,6 +11,12 @@ transactionRouter.get(
   TransactionController.getTransactionsByUserId
 );
 transactionRouter.get(
+  '/agent/commissions/:userId',
+  authenticate,
+  authenticateRoles(['admin', 'agent']),
+  TransactionController.getAgentCommissionsById
+);
+transactionRouter.get(
   '/get-all',
   authenticate,
   authenticateRoles(['admin']),

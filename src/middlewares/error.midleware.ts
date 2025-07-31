@@ -48,7 +48,7 @@ export function globalErrorHandler(
   res.status(statusCode).json({
     statusCode,
     message,
-    error: err.name,
+    errorName: err.name,
     ...(errorDetails && { errors: errorDetails }),
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
