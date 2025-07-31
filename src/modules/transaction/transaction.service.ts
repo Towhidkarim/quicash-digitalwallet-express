@@ -65,9 +65,13 @@ export const commitMoneyTransaction = async ({
     const recipientWallet = await WalletModel.findOne({
       walletOwnerId: recipient?._id,
     });
+
+    if (!recipient || !initiator || !initiatorWallet || !recipientWallet) {
+      throw new ApiError(status.NOT_FOUND, 'User not found');
+    }
     if (
-      initiatorWallet?.walletStatus === 'frozen' ||
-      recipientWallet?.walletStatus === 'frozen'
+      initiatorWallet.walletStatus === 'frozen' ||
+      recipientWallet.walletStatus === 'frozen'
     ) {
       throw new ApiError(
         status.BAD_REQUEST,
@@ -75,17 +79,13 @@ export const commitMoneyTransaction = async ({
       );
     }
     if (
-      initiator?.accountStatus === 'inactive' ||
-      recipient?.accountStatus === 'inactive'
+      initiator.accountStatus === 'inactive' ||
+      recipient.accountStatus === 'inactive'
     )
       throw new ApiError(
         status.BAD_REQUEST,
         'Inactive accounts cannot perform transactions'
       );
-
-    if (!recipient || !initiator || !initiatorWallet) {
-      throw new ApiError(status.NOT_FOUND, 'User not found');
-    }
     // console.log(initiator.phoneNumber, recipient.phoneNumber);
     if (
       initiator.phoneNumber === recipient.phoneNumber &&
