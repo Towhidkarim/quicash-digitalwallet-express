@@ -41,7 +41,7 @@ const getUserByPhoneNumber = asyncHandler(
         'You are not authorized to access this information'
       );
 
-    const userInfo = await UserModel.find(
+    const userInfo = await UserModel.findOne(
       { phoneNumber: phoneNumberToFetch },
       { password: 0 }
     );

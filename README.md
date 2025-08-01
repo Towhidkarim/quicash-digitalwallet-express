@@ -134,15 +134,37 @@ quicash-digitalwallet-express/
 #### Istructions (Please follow carefully)
 
 - First, set the {{base_url}} to `https://quicash-digitalwallet-express.onrender.com`
-- Then after signing in with credentials, on each request, include the Bearer Token as the Authorization Header of the request of `Postman` in the format `Bearer ${token_here}`
-- The Authorization Header should look like `Bearer auth-jwt-token-here`
+- Then after signing in with credentials, on each request, include the Bearer Token as the Authorization Header of the request of `Postman` in the format `Bearer <token_here>`
+- The Authorization Header in Postman should look like `Bearer auth-jwt-token-here`
 - The token can also be set as a postman variable within {{vault:json-web-token}}
 
-#### Test Admin Credential
+### Test Credential for Testing
+
+_Phone number and password required for signing in_
+
+#### Admin Sign in Credentials
 
 ```json
 {
   "phoneNumber": "01755555555",
+  "password": "admin_password"
+}
+```
+
+#### Agent Sign in Credentials
+
+```json
+{
+  "phoneNumber": "01799999999",
+  "password": "admin_password"
+}
+```
+
+#### User Sign in Credentials
+
+```json
+{
+  "phoneNumber": "01788888888",
   "password": "admin_password"
 }
 ```
@@ -228,6 +250,31 @@ quicash-digitalwallet-express/
 ### Get user By ID
 
 - `GET /api/v1/user/:id` – Get user info from id
+- A user can fetch his own info, but Admin can fetch anyone's information
+
+#### Response:
+
+```json
+{
+  "message": "Information retrived succesfully",
+  "statusCode": 200,
+  "data": {
+    "_id": "688a387c01a606c167f4aae3",
+    "email": "towhidkarim123@gmail.com",
+    "firstName": "Towhid",
+    "lastName": "Karim",
+    "phoneNumber": "01744161517",
+    "role": "admin",
+    "createdAt": "2025-07-30T15:21:32.076Z",
+    "updatedAt": "2025-07-30T15:21:32.076Z",
+    "accountStatus": "active"
+  }
+}
+```
+
+### Get user By Phone Number
+
+- `GET /api/v1/user/phone-number/:phoneNumber` – Get user info from their account phone number
 - A user can fetch his own info, but Admin can fetch anyone's information
 
 #### Response:
