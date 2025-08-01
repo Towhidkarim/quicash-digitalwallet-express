@@ -101,11 +101,11 @@ const signUp = asyncHandler(
     const { newUser, newWallet } = await createAccount(parsedBody);
     if (!newUser || !newWallet)
       throw new ApiError(status.INTERNAL_SERVER_ERROR, 'User creation failed');
-    const { password, ...infoToSend } = newUser;
+    newUser.password = '';
     sendResponse(res, {
       message: 'User Sign Up Succesful!',
       statusCode: status.OK,
-      data: { newUser: infoToSend, newWallet },
+      data: { newUser, newWallet },
     });
   }
 );
