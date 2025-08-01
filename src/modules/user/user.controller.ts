@@ -103,10 +103,12 @@ const updateUser = asyncHandler(
     );
     if (!userInfo) throw new ApiError(status.NOT_FOUND, 'User not found');
 
+    const { password, ...userInfoToSend } = userInfo;
+
     sendResponse(res, {
       message: 'Information Updated Succesfully',
       statusCode: status.OK,
-      data: userInfo,
+      data: userInfoToSend,
     });
   }
 );
@@ -147,10 +149,11 @@ const setUserRole = asyncHandler(
     if (!user) {
       throw new ApiError(status.NOT_FOUND, 'User not found');
     }
+    const { password, ...infoToSend } = user;
     sendResponse(res, {
       message: 'Account status updated successfully',
       statusCode: status.OK,
-      data: user,
+      data: infoToSend,
     });
   }
 );

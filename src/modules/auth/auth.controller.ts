@@ -24,9 +24,7 @@ const signIn = asyncHandler(
 
     const user = await UserModel.find({
       phoneNumber: parsedBody.phoneNumber,
-    })
-      .select({ password: 1, _id: 1, role: 1, email: 1, phoneNumber: 1 })
-      .limit(1);
+    }).limit(1);
 
     const existingUser = user[0];
 
@@ -35,11 +33,12 @@ const signIn = asyncHandler(
         status.BAD_REQUEST,
         'User with Phone number not found'
       );
-
     const passwordMatched = await bcrypt.compare(
       parsedBody.password,
       user[0].password
     );
+    if (!passwordMatched)
+      throw new ApiError(status.UNAUTHORIZED, 'Incorrect Password');
     if (passwordMatched) {
       const requestUser: TRequestUser = {
         _id: String(existingUser._id),
@@ -47,6 +46,7 @@ const signIn = asyncHandler(
         role: existingUser.role,
         phoneNumber: existingUser.phoneNumber,
       };
+
       const accessToken = await createToken(
         requestUser,
         env.ACCESS_TOKEN_EXPIRES_IN
@@ -68,10 +68,11 @@ const signIn = asyncHandler(
         sameSite: env.NODE_ENV === 'production' ? 'strict' : 'lax',
         maxAge: 1 * 24 * 60 * 60 * 1000, // 1 days
       });
+      const { password, ...userInfoToSend } = existingUser;
       sendResponse(res, {
         statusCode: status.OK,
         message: 'Signed In succesfully',
-        data: { accessToken, refreshToken },
+        data: { userInfo: userInfoToSend, accessToken, refreshToken },
       });
     }
   }
@@ -98,10 +99,13 @@ const signUp = asyncHandler(
     //   password: hashedPassword,
     // });
     const { newUser, newWallet } = await createAccount(parsedBody);
+    if (!newUser || !newWallet)
+      throw new ApiError(status.INTERNAL_SERVER_ERROR, 'User creation failed');
+    const { password, ...infoToSend } = newUser;
     sendResponse(res, {
       message: 'User Sign Up Succesful!',
       statusCode: status.OK,
-      data: { newUser, newWallet },
+      data: { newUser: infoToSend, newWallet },
     });
   }
 );
