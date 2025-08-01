@@ -16,7 +16,9 @@ export async function authenticate(
   if (!authHeader)
     throw new ApiError(status.UNAUTHORIZED, 'Authorization Header Not found');
 
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.includes('Bearer')
+    ? authHeader.split(' ')[1]
+    : authHeader;
   try {
     const JWT_SECRET = new TextEncoder().encode(env.JWT_SECRET);
     const { payload } = await jwtVerify(token, JWT_SECRET);
