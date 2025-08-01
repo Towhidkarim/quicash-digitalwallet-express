@@ -103,12 +103,13 @@ const updateUser = asyncHandler(
     );
     if (!userInfo) throw new ApiError(status.NOT_FOUND, 'User not found');
 
-    const { password, ...userInfoToSend } = userInfo;
+    // const { password, ...userInfoToSend } = userInfo;
+    userInfo.password = '';
 
     sendResponse(res, {
       message: 'Information Updated Succesfully',
       statusCode: status.OK,
-      data: userInfoToSend,
+      data: userInfo,
     });
   }
 );
@@ -127,6 +128,7 @@ const setAccountStatus = asyncHandler(
     if (!user) {
       throw new ApiError(status.NOT_FOUND, 'User not found');
     }
+    user.password = '';
     sendResponse(res, {
       message: 'Account status updated successfully',
       statusCode: status.OK,
@@ -149,11 +151,11 @@ const setUserRole = asyncHandler(
     if (!user) {
       throw new ApiError(status.NOT_FOUND, 'User not found');
     }
-    const { password, ...infoToSend } = user;
+    user.password = ''; // Remove password from response
     sendResponse(res, {
       message: 'Account status updated successfully',
       statusCode: status.OK,
-      data: infoToSend,
+      data: user,
     });
   }
 );

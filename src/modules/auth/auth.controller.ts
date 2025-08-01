@@ -68,11 +68,11 @@ const signIn = asyncHandler(
         sameSite: env.NODE_ENV === 'production' ? 'strict' : 'lax',
         maxAge: 1 * 24 * 60 * 60 * 1000, // 1 days
       });
-      const { password, ...userInfoToSend } = existingUser;
+      existingUser.password = ''; // Remove password from response
       sendResponse(res, {
         statusCode: status.OK,
         message: 'Signed In succesfully',
-        data: { userInfo: userInfoToSend, accessToken, refreshToken },
+        data: { userInfo: existingUser, accessToken, refreshToken },
       });
     }
   }
