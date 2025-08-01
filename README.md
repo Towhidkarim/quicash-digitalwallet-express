@@ -29,6 +29,9 @@ A minimal RESTful API for a Digital Wallet management system similar to services
   - Edit any user profile and set roles
   - Freeze/unfreeze any wallets
   - Activate/Deactivate agents or user accounts
+- Wallets can be in either `frozen` or `active` status (can be configured by admin)
+- User accounts (all) can be in either `active` or `inactive` status (also can be configured by admin)
+- Frozen wallets or inactive accounts can't be involved in a transaction
 - Centralized error handling, 404 error handling, and validation using **Zod**
 - Organized architecture (controllers, routes, models, middlewares) through MVC architecture
 - MongoDB integration with Mongoose
@@ -81,6 +84,18 @@ pnpm start
 
 ---
 
+## Tech Stack
+
+| Category  | Tools                                             |
+| --------- | ------------------------------------------------- |
+| Framework | Express.js                                        |
+| Language  | TypeScript                                        |
+| Database  | MongoDB + Mongoose                                |
+| Security  | jwt, bcrypt, jose                                 |
+| Others    | cors, cookie-parser, zod, dotenv, t3-oss/env, tsx |
+
+---
+
 ## Project Structure
 
 ```
@@ -116,11 +131,11 @@ quicash-digitalwallet-express/
 
 #### Also, The Postman Collection can be imported from the included file `postman.json`
 
-#### Istructions
+#### Istructions (Please follow carefully)
 
 - First, set the {{base_url}} to `https://quicash-digitalwallet-express.onrender.com`
-- Then after signing in with credentials, on each request, include the Bearer Token as the Authorization Header of the request in the format `Bearer ${token_here}`
-- The authorization header should look like `Bearer auth-jwt-token-here`
+- Then after signing in with credentials, on each request, include the Bearer Token as the Authorization Header of the request of `Postman` in the format `Bearer ${token_here}`
+- The Authorization Header should look like `Bearer auth-jwt-token-here`
 - The token can also be set as a postman variable within {{vault:json-web-token}}
 
 #### Test Admin Credential
@@ -368,7 +383,7 @@ quicash-digitalwallet-express/
 
 ### Get Wallet by Phone Number
 
-- `GET /api/v1/wallet/by-user-id/:phoneNumber` Get wallet data by ID
+- `GET /api/v1/wallet/by-user-phone-number/:phoneNumber` Get wallet data by ID
 - User can access their own wallets. Admins can access any.
 - Convenient since phone number is a unique identifier as well
 
