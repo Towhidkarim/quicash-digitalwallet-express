@@ -32,6 +32,24 @@ const getWalletById = asyncHandler(
   }
 );
 
+const getMyWallet = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const requestUser = validateSchema(requestUserSchema, req.user);
+
+    const [walletInfo] = await WalletModel.find({
+      walletOwnerId: requestUser._id,
+    });
+    if (!walletInfo)
+      throw new ApiError(status.NOT_FOUND, 'Wallet with given ID not found');
+
+    sendResponse(res, {
+      message: 'Wallet information retrived succesfully',
+      statusCode: status.OK,
+      data: walletInfo,
+    });
+  }
+);
+
 const getAllWallets = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { skip, limit, sortBy, sortOrder } = req.query;
@@ -129,6 +147,7 @@ const getWalletByPhoneNumber = asyncHandler(
 
 export const WalletController = {
   getWalletById,
+  getMyWallet,
   getWalletByPhoneNumber,
   setWalletStatus,
   getAllWallets,

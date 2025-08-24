@@ -10,6 +10,7 @@ walletRouter.get(
   authenticate,
   WalletController.getWalletById
 );
+walletRouter.get('/me', authenticate, WalletController.getMyWallet);
 walletRouter.get(
   '/by-user-phone-number/:phoneNumber',
   authenticate,

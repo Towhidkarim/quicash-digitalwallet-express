@@ -11,12 +11,19 @@ userRouter.get(
   authenticateRoles(['admin']),
   UserController.getAllUsers
 );
+userRouter.get('/me', authenticate, UserController.getMe);
 userRouter.get('/id/:id', authenticate, UserController.getUserById);
 userRouter.get(
   '/phone-number/:phoneNumber',
   authenticate,
   UserController.getUserByPhoneNumber
 );
+userRouter.patch(
+  '/change-password',
+  authenticate,
+  UserController.updatePassword
+);
+
 userRouter.patch('/update/:id', authenticate, UserController.updateUser);
 userRouter.patch(
   '/set-account-status',

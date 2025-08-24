@@ -15,7 +15,6 @@ const userDBSchema = new Schema<TUser>(
       type: String,
       enum: Object.values(Roles),
       required: true,
-      default: 'user',
     },
     accountStatus: {
       type: String,

@@ -98,6 +98,13 @@ const signUp = asyncHandler(
     //   role: 'user',
     //   password: hashedPassword,
     // });
+
+    // sendResponse(res, {
+    //   statusCode: 200,
+    //   data: parsedBody,
+    //   message: 'log',
+    // });
+    if (!parsedBody.role) parsedBody.role = 'user';
     const { newUser, newWallet } = await createAccount(parsedBody);
     if (!newUser || !newWallet)
       throw new ApiError(status.INTERNAL_SERVER_ERROR, 'User creation failed');

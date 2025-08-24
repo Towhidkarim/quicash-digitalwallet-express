@@ -42,6 +42,27 @@ const getTransactionsByUserId = asyncHandler(
   }
 );
 
+const getMyTransactions = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+
+    const requestUser = validateSchema(requestUserSchema, user);
+
+    const transactions = await TransactionModel.find({
+      $or: [{ initiatorId: requestUser._id }, { recipientId: requestUser._id }],
+    });
+
+    if (!transactions || transactions.length === 0)
+      throw new ApiError(status.NOT_FOUND, 'No transactions found');
+
+    sendResponse(res, {
+      message: 'Transactions retrieved successfully',
+      statusCode: status.OK,
+      data: transactions,
+    });
+  }
+);
+
 const getTransactionById = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const transactionId = req.params.id;
@@ -272,6 +293,7 @@ const addMoneyAdmin = asyncHandler(
 export const TransactionController = {
   getTransactionsByUserId,
   getTransactionById,
+  getMyTransactions,
   getAllTransactions,
   sendMoney,
   cashIn,

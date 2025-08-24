@@ -41,3 +41,8 @@ export const userUpdateSchema = z.object({
     .optional(),
   email: z.email().optional(),
 });
+
+export const passwordUpdateSchema = z.object({
+  oldPassword: z.string().min(6),
+  newPassword: z.string().min(6),
+});

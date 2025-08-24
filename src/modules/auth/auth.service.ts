@@ -27,7 +27,6 @@ export const createAccount = async (
       [
         {
           ...newUserData,
-          role: 'user',
           password: hashedPassword,
         },
       ],

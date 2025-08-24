@@ -22,6 +22,7 @@ export const signUpSchema = z.object({
       /^[a-zA-Z]{3,16}$/,
       'Last Name must be 3-16 letters with no numbers or symbols'
     ),
+  role: z.enum(['user', 'agent']).optional(),
   email: z.email(),
   phoneNumber: z.string().regex(/^01\d{9}$/),
   password: z.string().min(6),

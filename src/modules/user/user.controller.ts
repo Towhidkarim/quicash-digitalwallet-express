@@ -5,8 +5,9 @@ import { status } from 'http-status';
 import { UserModel } from './user.model';
 import { sendResponse } from '../../utils/sendResponse';
 import { validateSchema } from '../../utils/validateSchema';
-import { userUpdateSchema } from './user.schema';
+import { userUpdateSchema, passwordUpdateSchema } from './user.schema';
 import { Roles } from '../../config/roles';
+import bcrypt from 'bcryptjs';
 
 const getUserById = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -30,16 +31,31 @@ const getUserById = asyncHandler(
   }
 );
 
+const getMe = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+
+    const userInfo = await UserModel.findById(user?._id, { password: 0 });
+    if (!userInfo) throw new ApiError(status.NOT_FOUND, 'User not found');
+
+    sendResponse(res, {
+      message: 'Information retrived succesfully',
+      statusCode: status.OK,
+      data: userInfo,
+    });
+  }
+);
+
 const getUserByPhoneNumber = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
     const phoneNumberToFetch = req.params.phoneNumber;
     if (!user) throw new ApiError(status.UNAUTHORIZED, 'User Object not found');
-    if (phoneNumberToFetch !== user.phoneNumber && user.role !== 'admin')
-      throw new ApiError(
-        status.UNAUTHORIZED,
-        'You are not authorized to access this information'
-      );
+    // if (phoneNumberToFetch !== user.phoneNumber && user.role !== 'admin')
+    //   throw new ApiError(
+    //     status.UNAUTHORIZED,
+    //     'You are not authorized to access this information'
+    //   );
 
     const userInfo = await UserModel.findOne(
       { phoneNumber: phoneNumberToFetch },
@@ -160,11 +176,58 @@ const setUserRole = asyncHandler(
   }
 );
 
+const updatePassword = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    if (!user) throw new ApiError(status.UNAUTHORIZED, 'User Object not found');
+
+    const parsedBody = validateSchema(passwordUpdateSchema, req.body);
+
+    // Get the user with password from database
+    const userWithPassword = await UserModel.findById(user._id);
+    if (!userWithPassword)
+      throw new ApiError(status.NOT_FOUND, 'User not found');
+
+    // Verify old password
+    const isPasswordCorrect = await bcrypt.compare(
+      parsedBody.oldPassword,
+      userWithPassword.password
+    );
+    if (!isPasswordCorrect) {
+      throw new ApiError(status.UNAUTHORIZED, 'Old password is incorrect');
+    }
+
+    const SALT_ROUNDS = 10;
+    const hashedPassword = await bcrypt.hash(
+      parsedBody.newPassword,
+      SALT_ROUNDS
+    );
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      user._id,
+      { password: hashedPassword },
+      { new: true }
+    );
+    if (!updatedUser) throw new ApiError(status.NOT_FOUND, 'User not found');
+
+    // Remove password from response
+    updatedUser.password = '';
+
+    sendResponse(res, {
+      message: 'Password updated successfully',
+      statusCode: status.OK,
+      data: updatedUser,
+    });
+  }
+);
+
 export const UserController = {
   getUserById,
   getAllUsers,
+  getMe,
   updateUser,
   setAccountStatus,
   getUserByPhoneNumber,
   setUserRole,
+  updatePassword,
 };
